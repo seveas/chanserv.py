@@ -1,0 +1,54 @@
+Simple chanserv helper script for Xchat
+(c) 2006-2010 Dennis Kaarsemaker
+
+Latest version can be found on http://github.com/seveas/chanserv.py
+
+This script is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 3, as published by the Free Software Foundation.
+
+Usage instructions:
+- Place in ~/.xchat2 for it to be autoloaded
+- Use /py load chanserv.py if you already started X-chat
+- Connect to freenode, if not connected (other networks will not work)
+
+It adds one command to xchat: /cs
+/cs understands the following arguments
+
+To give/take ops/voice:
+
+o  or op      - Let chanserv op you/others (/cs op, /cs op nick)
+v  or voice   - Let chanserv give you/others voice
+d  or deop    - Let chanserv deop you/others (/cs deop, /cs deop nick)
+dv or devoice - Let chanserv decoice you/others (/cs devoice, /cs devoice nick)
+
+To op yourself, perform an action, and deop:
+
+k  or kick    - Kick a user, possibly with comment (/cs kick nick [comment])
+b  or ban     - Ban a user (/cs ban [-nihar] nick)
+kb or kickban - Kick and ban a user (/cs ban [-nihar] nick)
+f  or forward - Ban a user with a forward (/cs forward [-nihar] nick chan)
+kf or kickforward - Kickban a user with a forward (/cs forward [-nihar] nick chan)
+m  or mute    - Mute a user (/cs mute [-nihar] nick)
+l  or lart    - A combination of kick and ban on all fields
+u  or unban   - Remove all bans for a user (/cs u nick)
+t  or topic   - Set channel topic (/cs t New topic here)
+m  or mode    - Change channel mode (/cs mode modes here)
+i  or invite  - Invite yourself or someone else (/cs invite [nick])
+bans          - Show bans that apply to someone without removing them (/cs bans nick)
+
+* Bans, forwards and mute take an extra optional argument that specifies 
+  what should be banned: nickname, ident, host, account and/or realname.
+  /cs ban -nah nick -- Ban nick, account and host
+  /cs forward -nihra nick #somewhere -- Forward all
+
+* Unban will remove all bans matching the nick or mask you give as argument
+  (*  and ? wildcards work)
+* It won't actually kick, but use the /remove command
+
+The following additional features are implemented
+- Autorejoin for /remove
+- Auto-unmute when muted
+- Auto-unban via chanserv
+- Auto-invite via chanserv
+- Auto-getkey via chanserv
