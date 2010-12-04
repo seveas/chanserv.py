@@ -51,6 +51,11 @@
 #   /cs ban -nah nick -- Ban nick, account and host
 #   /cs forward -nihra nick #somewhere -- Forward all
 #
+# * These commands also take an extra argument to specify when bans/mutes
+#   should be lifted automatically.
+#   /cs ban -t600 nick -- Ban nick for 10 minutes
+#   /cs ban -nah -t3600 -- Ban nick, account and hostname for an hour
+#
 # * Unban will remove all bans matching the nick or mask you give as argument
 #   (*  and ? wildcards work)
 # * It won't actually kick, but use the /remove command
@@ -63,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.0.4"
+__module_version__     = "2.1.0"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -157,9 +162,17 @@ def cs(word, word_eol, userdata):
     # Command dispatch
     # Check for -nihra argument
     if command in ban_commands:
-        if args[0].startswith('-'):
-            action.bans = args[0][1:].split(None, 1)[0]
-            args = dict(enumerate(word_eol[3:]))
+        args_start = 3
+        while args[0].startswith('-'):
+            if args[0].startswith('-t'):
+                try:
+                    action.timer = int(args[0][2:].split(None, 1)[0])
+                except ValueError:
+                    pass
+            else:
+                action.bans = args[0][1:].split(None, 1)[0]
+            args = dict(enumerate(word_eol[args_start:]))
+            args_start += 1
     if command in ('lart','l'):
         action.bans = 'nihra'
 
@@ -217,7 +230,7 @@ def cs(word, word_eol, userdata):
     return action.schedule()
 xchat.hook_command('cs',cs,"For help with /cs, please read the comments in the script")
 
-class Action:
+class Action(object):
     """A list of actions to do, and information needed for them"""
     def __init__(self, channel, me, context):
         self.channel = channel
@@ -236,6 +249,7 @@ class Action:
         self.resolved = True
         self.target = ''
         self.forward_to = ''
+        self.timer = 0
 
     def schedule(self):
         """Request information and add ourselves to the queue"""
@@ -358,6 +372,21 @@ class Action:
 
         if self.deop:
             self.context.command("chanserv deop %s" % self.channel)
+
+        # Schedule removal?
+        if self.timer:
+            action = Action(self.channel, self.me, self.context)
+            action.deop = self.deop
+            action.actions = [x.replace('+','-',1) for x in self.actions]
+            action.target = action.target_nick = self.target_nick
+            action.target_ident = self.target_ident
+            action.target_host = self.target_host
+            action.target_name = self.target_name
+            action.target_name_bannable = self.target_name_bannable
+            action.target_account = self.target_account
+            action.resolved = True
+            action.banmode = self.banmode
+            xchat.hook_timer(self.timer * 1000, lambda x: x() and False, action.schedule)
 
     def match(self, ban):
         """Does a ban match this action"""
