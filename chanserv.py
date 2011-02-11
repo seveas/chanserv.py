@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.1.0"
+__module_version__     = "2.1.1"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -423,7 +423,7 @@ def run_pending(just_opped = None):
 def ban2re(data):
     return re.compile('^' + re.escape(data).replace(r'\*','.*').replace(r'\?','.') + '$')
 
-_valid_nickname = re.compile(r'^[-a-zA-Z0-9\[\]{}`|_]{0,30}$')
+_valid_nickname = re.compile(r'^[-a-zA-Z0-9\[\]{}`|_^]{0,30}$')
 valid_nickname = lambda data: _valid_nickname.match(data)
 _valid_channel = re.compile(r'^[#~].*') # OK, this is cheating
 valid_channel = lambda data: _valid_channel.match(data)
