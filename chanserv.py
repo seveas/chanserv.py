@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.1.1"
+__module_version__     = "2.2.1"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -83,7 +83,7 @@ users = {}
 # /mode bq 'cache'
 bans = collections.defaultdict(list)
 quiets = collections.defaultdict(list)
-bq_switch = {}
+collecting_bans = []
 
 abbreviations = {'kick': 'k', 'ban': 'b', 'kickban': 'kb', 'forward': 'f', 
                  'kickforward': 'kf', 'mute': 'm', 'topic': 't', 'unban': 'u',
@@ -321,9 +321,9 @@ class Action(object):
 
     def fetch_bans(self):
         """Read bans for a channel"""
-        bq_switch[self.channel] = 'b'
         bans[self.channel] = []
         quiets[self.channel] = []
+        collecting_bans.append(self.channel)
         self.context.command("mode %s +bq" % self.channel)
 
     def run(self):
@@ -415,7 +415,7 @@ def run_pending(just_opped = None):
             p.done()
             continue
 
-        can_run = (bans[p.channel] and quiets[p.channel]) or not (p.do_unban or p.do_bans)
+        can_run = not (p.channel in collecting_bans and (p.do_unban or p.do_bans))
         if can_run and p.resolved and (p.am_op or not p.needs_op):
             p.run()
 
@@ -481,29 +481,38 @@ xchat.hook_server('482', lambda word, word_eol, userdata: xchat.emit_print('Serv
 def do_ban(word, word_eol, userdata):
     """Process banlists"""
     channel, ban = word[3:5]
-    if channel in bq_switch:
-        if bq_switch[channel] == 'b':
-            bans[channel].append(ban)
-        else:
-            quiets[channel].append(ban)
+    if channel in collecting_bans:
+        bans[channel].append(ban)
         return xchat.EAT_ALL
     return xchat.EAT_NONE
 xchat.hook_server('367', do_ban)
 
+def do_quiet(word, word_eol, userdata):
+    """Process banlists"""
+    channel, ban = word[3], word[5]
+    if channel in collecting_bans:
+        quiets[channel].append(ban)
+        return xchat.EAT_ALL
+    return xchat.EAT_NONE
+xchat.hook_server('728', do_quiet)
+
 def do_endban(word, word_eol, userdata):
     """Process end-of-ban markers"""
     channel = word[3]
-    if channel in bq_switch:
-        if 'Ban' in word:
-            bans[channel].append(ban_sentinel)
-            bq_switch[channel] = 'q'
-        elif 'Quiet' in word:
-            quiets[channel].append(ban_sentinel)
-            del bq_switch[channel]
-            run_pending()
+    if channel in collecting_bans:
         return xchat.EAT_ALL
     return xchat.EAT_NONE
 xchat.hook_server('368', do_endban)
+
+def do_endquiet(word, word_eol, userdata):
+    """Process end-of-quiet markers"""
+    channel = word[3]
+    if channel in collecting_bans:
+        collecting_bans.remove(channel)
+        run_pending()
+        return xchat.EAT_ALL
+    return xchat.EAT_NONE
+xchat.hook_server('729', do_endquiet)
 
 # Turn on autorejoin
 xchat.command('SET -quiet irc_auto_rejoin ON')
