@@ -1,17 +1,17 @@
 # Simple chanserv helper script for Xchat
-# (c) 2006-2010 Dennis Kaarsemaker
+# (c) 2006-2012 Dennis Kaarsemaker
 #
 # Latest version can be found on http://github.com/seveas/chanserv.py
-# 
+#
 # This script is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # version 3, as published by the Free Software Foundation.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
@@ -46,7 +46,7 @@
 # i  or invite  - Invite yourself or someone else (/cs invite [nick])
 # bans          - Show bans that apply to someone without removing them (/cs bans nick)
 #
-# * Bans, forwards and mute take an extra optional argument that specifies 
+# * Bans, forwards and mute take an extra optional argument that specifies
 #   what should be banned: nickname, ident, host, account and/or realname.
 #   /cs ban -nah nick -- Ban nick, account and host
 #   /cs forward -nihra nick #somewhere -- Forward all
@@ -85,7 +85,7 @@ bans = collections.defaultdict(list)
 quiets = collections.defaultdict(list)
 collecting_bans = []
 
-abbreviations = {'kick': 'k', 'ban': 'b', 'kickban': 'kb', 'forward': 'f', 
+abbreviations = {'kick': 'k', 'ban': 'b', 'kickban': 'kb', 'forward': 'f',
                  'kickforward': 'kf', 'mute': 'm', 'topic': 't', 'unban': 'u',
                  'mode': 'm', 'invite': 'i', 'op': 'o', 'deop': 'd', 'lart': 'l',
                  'voice': 'v', 'devoice': 'dv', 'bans': 'bans'}
@@ -132,7 +132,7 @@ def cs(word, word_eol, userdata):
             xchat.emit_print("Server Error", "Not enough arguments for %s" % command)
             return xchat.EAT_ALL
         return xchat.EAT_NONE
-        
+
     if command in ('t','topic'):
         action.actions.append('chanserv TOPIC %%(channel)s %s' % args[0])
         action.needs_op = False
@@ -189,7 +189,7 @@ def cs(word, word_eol, userdata):
 
     if valid_mask(action.target):
         action.bans = 'f'
-    
+
     if not action.bans:
         action.bans = 'h'
 
@@ -202,8 +202,8 @@ def cs(word, word_eol, userdata):
 
     # Check if target is there and schedule kick
     if command in kick_commands:
-        if action.target.lower() not in [x.nick.lower() for x in action.context.get_list('users')]: 
-            xchat.emit_print("Server Error", "%s is not in %s" % (action.target, action.channel)) 
+        if action.target.lower() not in [x.nick.lower() for x in action.context.get_list('users')]:
+            xchat.emit_print("Server Error", "%s is not in %s" % (action.target, action.channel))
             return xchat.EAT_ALL
         action.reason = args.get(1, 'Goodbye')
         action.actions.append('remove %(channel)s %(target_nick)s :%(reason)s')
@@ -312,7 +312,7 @@ class Action(object):
                 self.target_account = users[self.target_nick].account
                 self.resolved = True
                 if 'gateway/' in self.target_host and self.bans == 'h' and self.do_ban:
-                    # For gateway/* users, default to ident ban 
+                    # For gateway/* users, default to ident ban
                     self.actions.append('mode %(channel)s +%(banmode)s *!%(target_ident)s@gateway/*%(forward_to)s')
                     self.actions.remove('mode %(channel)s +%(banmode)s *!*@%(target_host)s%(forward_to)s')
         else:
@@ -331,7 +331,7 @@ class Action(object):
         kwargs = dict(self.__dict__.items())
 
         if self.do_bans:
-            xchat.emit_print('Server Text', "Bans matching %s!%s@%s (r:%s, a:%s)" % 
+            xchat.emit_print('Server Text', "Bans matching %s!%s@%s (r:%s, a:%s)" %
                     (self.target_nick, self.target_ident, self.target_host, self.target_name, self.target_account))
 
         if self.do_unban or self.do_bans:
@@ -429,7 +429,7 @@ _valid_channel = re.compile(r'^[#~].*') # OK, this is cheating
 valid_channel = lambda data: _valid_channel.match(data)
 _valid_mask = re.compile(r'^([-a-zA-Z0-9\[\]{}`|_^\\*?]{0,30}!.*?@.*?|\$[ar]:.*)$')
 valid_mask = lambda data: _valid_mask.match(data)
- 
+
 # Data processing
 def do_mode(word, word_eol, userdata):
     """Run pending actions when chanserv opped us"""
