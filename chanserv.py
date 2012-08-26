@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.2.2"
+__module_version__     = "2.2.3"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -261,10 +261,12 @@ class Action(object):
         ctx['actions'] = ' | '.join(self.actions)
         return "C: %(channel)s T: %(target)s A: %(actions)s" % ctx
 
-    def schedule(self):
+    def schedule(self, update_stamp=False):
         """Request information and add ourselves to the queue"""
         if debug:
             xchat.emit_print('Server Text', "Scheduling " + str(self))
+        if update_stamp:
+            self.stamp = time.time()
         pending.append(self)
         # Am I opped?
         self.am_op = False
@@ -402,7 +404,8 @@ class Action(object):
             action.target_account = self.target_account
             action.resolved = True
             action.banmode = self.banmode
-            xchat.hook_timer(self.timer * 1000, lambda x: x() and False, action.schedule)
+            action.needs_op = True
+            xchat.hook_timer(self.timer * 1000, lambda act: act.schedule(update_stamp=True) and False, action)
 
     def match(self, ban):
         """Does a ban match this action"""
