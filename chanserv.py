@@ -75,6 +75,7 @@ import collections
 import xchat
 import time
 import re
+import os
 
 # Event queue
 pending = []
@@ -100,6 +101,8 @@ ban_commands += [abbreviations[x] for x in ban_commands]
 forward_commands += [abbreviations[x] for x in forward_commands]
 all_commands = abbreviations.keys() + abbreviations.values()
 ban_sentinel = '!'
+
+debug = os.path.exists(os.path.join(xchat.get_info('xchatdir'), 'chanserv.py-debug'))
 
 def cs(word, word_eol, userdata):
     """Main command dispatcher"""
@@ -251,8 +254,17 @@ class Action(object):
         self.forward_to = ''
         self.timer = 0
 
+    def __str__(self):
+        ctx = {'channel': self.channel, 'target': self.target}
+        if hasattr(self, 'target_ident'):
+            ctx['target'] = '%s!%s@%s (r: %s a: %s)' % (self.target_nick, self.target_ident, self.target_host, self.target_name, self.target_account)
+        ctx['actions'] = ' | '.join(self.actions)
+        return "C: %(channel)s T: %(target)s A: %(actions)s" % ctx
+
     def schedule(self):
         """Request information and add ourselves to the queue"""
+        if debug:
+            xchat.emit_print('Server Text', "Scheduling " + str(self))
         pending.append(self)
         # Am I opped?
         self.am_op = False
@@ -328,6 +340,8 @@ class Action(object):
 
     def run(self):
         """Perform our actions"""
+        if debug:
+            xchat.emit_print('Server Text', "Running " + str(self))
         kwargs = dict(self.__dict__.items())
 
         if self.do_bans:
@@ -359,6 +373,8 @@ class Action(object):
     def done(self):
         """Finaliazation and cleanup"""
         # Done!
+        if debug:
+            xchat.emit_print('Server Text', "Done " + str(self))
         pending.remove(self)
 
         # Deop?
