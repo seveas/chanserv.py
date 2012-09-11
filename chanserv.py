@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.2.3"
+__module_version__     = "2.2.4"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -368,6 +368,9 @@ class Action(object):
 
         # Perform all registered actions
         for action in self.actions:
+            if '%(target_account)s' in action and not self.target_account:
+                xchat.emit_print('Server Text', "Can't do an account ban for %s, not identified" % self.target_nick)
+                continue
             self.context.command(action % kwargs)
 
         self.done()
