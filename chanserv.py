@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.2.4"
+__module_version__     = "2.2.5"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -299,6 +299,7 @@ class Action(object):
         self.target_ident = None
         self.target_host = None
         self.target_name = None
+        self.target_name_bannable = None
         self.target_account = None
         self.resolved = False
 
@@ -307,6 +308,7 @@ class Action(object):
                 self.target_account = self.target[3:]
             elif self.target.startswith('$r:'):
                 self.target_name = self.target[3:]
+                self.target_name_bannable = re.sub('[^a-zA-Z0-9]', '?', self.target_name)
             else:
                 self.target_nick, self.target_mask, self.target_host = re.split('[!@]', self.target)
             self.resolved = True
