@@ -37,10 +37,15 @@ m  or mode    - Change channel mode (/cs mode modes here)
 i  or invite  - Invite yourself or someone else (/cs invite [nick])
 bans          - Show bans that apply to someone without removing them (/cs bans nick)
 
-* Bans, forwards and mute take an extra optional argument that specifies 
+* Bans, forwards and mute take an extra optional argument that specifies
   what should be banned: nickname, ident, host, account and/or realname.
   /cs ban -nah nick -- Ban nick, account and host
   /cs forward -nihra nick #somewhere -- Forward all
+
+* These commands also take an extra argument to specify when bans/mutes
+  should be lifted automatically.
+  /cs ban -t600 nick -- Ban nick for 10 minutes
+  /cs ban -nah -t3600 -- Ban nick, account and hostname for an hour
 
 * Unban will remove all bans matching the nick or mask you give as argument
   (*  and ? wildcards work)
