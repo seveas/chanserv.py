@@ -1,5 +1,5 @@
 # Simple chanserv helper script for Xchat
-# (c) 2006-2012 Dennis Kaarsemaker
+# (c) 2006-2013 Dennis Kaarsemaker
 #
 # Latest version can be found on http://github.com/seveas/chanserv.py
 #
@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.2.5"
+__module_version__     = "2.2.6"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -401,7 +401,8 @@ class Action(object):
             action = Action(self.channel, self.me, self.context)
             action.deop = self.deop
             action.actions = [x.replace('+','-',1) for x in self.actions]
-            action.target = action.target_nick = self.target_nick
+            action.target = self.target
+            action.target_nick = self.target_nick
             action.target_ident = self.target_ident
             action.target_host = self.target_host
             action.target_name = self.target_name
