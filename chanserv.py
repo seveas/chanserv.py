@@ -384,12 +384,13 @@ class Action(object):
                 xchat.emit_print('Server Text', "Can't do an account ban for %s, not identified" % self.target_nick)
                 continue
             action = action % kwargs
-            self.context.command(action)
             if self.channel in can_do_akick and self.timer:
                 timer = math.ceil(self.timer/60.0)
                 if ' +b ' in action:
                     ban = action.split()[-1]
                     self.context.command("chanserv akick %s ADD %s !T%d" % (self.channel, ban, timer))
+            else:
+                self.context.command(action)
 
         self.done()
 
