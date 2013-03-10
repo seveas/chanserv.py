@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.3.0"
+__module_version__     = "2.3.1"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -388,7 +388,7 @@ class Action(object):
                 timer = math.ceil(self.timer/60.0)
                 if ' +b ' in action:
                     ban = action.split()[-1]
-                    self.context.command("chanserv akick %s ADD %s !T%d" % (self.channel, ban, timer))
+                    self.context.command("chanserv akick %s ADD %s !T %d" % (self.channel, ban, timer))
             else:
                 self.context.command(action)
 
