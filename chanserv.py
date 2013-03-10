@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.2.6"
+__module_version__     = "2.3.0"
 __module_description__ = "Chanserv helper"
 
 import collections
