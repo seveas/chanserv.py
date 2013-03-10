@@ -76,6 +76,7 @@ import xchat
 import time
 import re
 import os
+import math
 
 # Event queue
 pending = []
@@ -84,7 +85,10 @@ users = {}
 # /mode bq 'cache'
 bans = collections.defaultdict(list)
 quiets = collections.defaultdict(list)
+akicks = collections.defaultdict(list)
 collecting_bans = []
+current_akick = None
+can_do_akick = []
 
 abbreviations = {'kick': 'k', 'ban': 'b', 'kickban': 'kb', 'forward': 'f',
                  'kickforward': 'kf', 'mute': 'm', 'topic': 't', 'unban': 'u',
@@ -359,7 +363,13 @@ class Action(object):
                     if self.do_bans:
                         xchat.emit_print('Server Text', b)
                     else:
-                        self.actions.append('mode %s -b %s' % (self.channel, b))
+                        if '$# akick' in b:
+                            b = b[:b.find('$#')]
+                            if b.endswith('!*@*'):
+                                b = b[:-4]
+                            self.actions.append('quote cs akick %s del %s' % (self.channel, b))
+                        else:
+                            self.actions.append('mode %s -b %s' % (self.channel, b))
 
             for b in quiets[self.channel]:
                 if self.match(b):
@@ -373,7 +383,13 @@ class Action(object):
             if '%(target_account)s' in action and not self.target_account:
                 xchat.emit_print('Server Text', "Can't do an account ban for %s, not identified" % self.target_nick)
                 continue
-            self.context.command(action % kwargs)
+            action = action % kwargs
+            self.context.command(action)
+            if self.channel in can_do_akick and self.timer:
+                timer = math.ceil(self.timer/60.0)
+                if ' +b ' in action:
+                    ban = action.split()[-1]
+                    self.context.command("chanserv akick %s ADD %s !T%d" % (self.channel, ban, timer))
 
         self.done()
 
@@ -397,7 +413,7 @@ class Action(object):
             self.context.command("chanserv deop %s" % self.channel)
 
         # Schedule removal?
-        if self.timer:
+        if self.timer and self.channel not in can_do_akick:
             action = Action(self.channel, self.me, self.context)
             action.deop = self.deop
             action.actions = [x.replace('+','-',1) for x in self.actions]
@@ -533,8 +549,7 @@ def do_endquiet(word, word_eol, userdata):
     """Process end-of-quiet markers"""
     channel = word[3]
     if channel in collecting_bans:
-        collecting_bans.remove(channel)
-        run_pending()
+        xchat.command('quote cs akick %s list' % channel)
         return xchat.EAT_ALL
     return xchat.EAT_NONE
 xchat.hook_server('729', do_endquiet)
@@ -564,13 +579,55 @@ def on_invite(word, word_eol, userdata):
 xchat.hook_server('INVITE', on_invite)
 
 def on_notice(word, word_eol, userdata):
-    """Autojoin when chanserv unbans us or sent us a key"""
+    global current_akick
+    if word[0] == ':NickServ!NickServ@services.':
+        if word[3:5] == [':Access', 'flag(s)'] and 'f' in word[5]:
+            can_do_akick.append(word[-1])
+        return
     if word[0] != ':ChanServ!ChanServ@services.':
         return
     if 'Unbanned' in word_eol[0]:
         xchat.command('JOIN %s' % word[6].strip()[1:-1])
     if 'key is' in word_eol[0]:
         xchat.command('JOIN %s %s' % (word[4][1:-1], word[-1]))
+
+    # Yay heuristics. Chances are reasonable that only one channel is in
+    # collecting_bans at any time, so let's assume that. Worst that could
+    # happen is that non-existing bans are shown or removal of them is tried.
+    if word_eol[3] == ':You are not authorized to perform this operation.':
+        # Tried akick list and failed. Just run all bans
+        for channel in collecting_bans[:]:
+            collecting_bans.remove(channel)
+            run_pending()
+        current_akick = None
+        return xchat.EAT_ALL
+
+    if word_eol[3].startswith(':AKICK list'):
+        current_akick = word[-1][1:-2]
+        if current_akick in collecting_bans:
+            return xchat.EAT_ALL
+        else:
+            current_akick = None
+
+    if current_akick and '[setter:' in word_eol[0] and 'modified:' in word_eol[0]:
+        # This looks like a ban to me. So everybody, just follow me.
+        ban = word[4][1:-1]
+        if '!' not in ban:
+            ban = ban + '!*@*'
+        ban += '$# akick ' + word_eol[5]
+        bans[current_akick].append(ban)
+        return xchat.EAT_ALL
+
+    if current_akick and word_eol[0].endswith('AKICK list.'):
+        current_akick = None
+        channel = word[-3][1:-3]
+        collecting_bans.remove(channel)
+        run_pending()
+        return xchat.EAT_ALL
+
 xchat.hook_server('NOTICE', on_notice)
+# Fetch channel access
+xchat.command('quote ns listchans')
+xchat.hook_server('376', lambda w, we, u: xchat.command('quote ns listchans'))
 
 xchat.emit_print('Server Text',"Loaded %s %s by Seveas <dennis@kaarsemaker.net>" % (__module_description__, __module_version__))
