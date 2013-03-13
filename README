@@ -1,5 +1,5 @@
 Simple chanserv helper script for Xchat
-(c) 2006-2012 Dennis Kaarsemaker
+(c) 2006-2013 Dennis Kaarsemaker
 
 Latest version can be found on http://github.com/seveas/chanserv.py
 
@@ -57,3 +57,8 @@ The following additional features are implemented
 - Auto-unban via chanserv
 - Auto-invite via chanserv
 - Auto-getkey via chanserv
+
+Please note that as of march 2013, I am no longer using Xchat. This script is
+stable and hasn't seen much changes over the last few years though. Bug reports
+and reasonable feature requests will still be accepted and acted upon, but I
+will not come up with new features, or find bugs myself.
