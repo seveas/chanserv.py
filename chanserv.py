@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.3.1"
+__module_version__     = "2.3.2"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -384,11 +384,10 @@ class Action(object):
                 xchat.emit_print('Server Text', "Can't do an account ban for %s, not identified" % self.target_nick)
                 continue
             action = action % kwargs
-            if self.channel in can_do_akick and self.timer:
+            if self.channel in can_do_akick and self.timer and ' +b ' in action:
                 timer = math.ceil(self.timer/60.0)
-                if ' +b ' in action:
-                    ban = action.split()[-1]
-                    self.context.command("chanserv akick %s ADD %s !T %d" % (self.channel, ban, timer))
+                ban = action.split()[-1]
+                self.context.command("chanserv akick %s ADD %s !T %d" % (self.channel, ban, timer))
             else:
                 self.context.command(action)
 
@@ -414,7 +413,7 @@ class Action(object):
             self.context.command("chanserv deop %s" % self.channel)
 
         # Schedule removal?
-        if self.timer and self.channel not in can_do_akick:
+        if self.timer and (self.channel not in can_do_akick or self.banmode == 'q'):
             action = Action(self.channel, self.me, self.context)
             action.deop = self.deop
             action.actions = [x.replace('+','-',1) for x in self.actions]
