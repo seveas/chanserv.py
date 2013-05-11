@@ -68,7 +68,7 @@
 # - Auto-getkey via chanserv
 
 __module_name__        = "chanserv"
-__module_version__     = "2.3.2"
+__module_version__     = "2.3.3"
 __module_description__ = "Chanserv helper"
 
 import collections
@@ -103,7 +103,7 @@ simple_commands += [abbreviations[x] for x in simple_commands]
 kick_commands += [abbreviations[x] for x in kick_commands]
 ban_commands += [abbreviations[x] for x in ban_commands]
 forward_commands += [abbreviations[x] for x in forward_commands]
-all_commands = abbreviations.keys() + abbreviations.values()
+all_commands = list(abbreviations.keys()) + list(abbreviations.values())
 ban_sentinel = '!'
 
 debug = os.path.exists(os.path.join(xchat.get_info('xchatdir'), 'chanserv.py-debug'))
